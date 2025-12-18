@@ -1,7 +1,8 @@
 document.addEventListener("DOMContentLoaded", () => {
 
   /* ================= CONFIG ================= */
-  const API_URL = "https://wagurialbum-production.up.railway.app/api/upload"
+  const API_UPLOAD = "/api/upload"
+  const API_DELETE = "/api/video"
   const totalPhotos = 40
   const totalVideos = 12
 
@@ -23,21 +24,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
   /* ================= MUSIC ================= */
   let playing = false
-  musicBtn.addEventListener("click", async () => {
-    try {
-      if (!playing) {
-        await bgMusic.play()
-        musicBtn.textContent = "⏸ Music"
-        playing = true
-      } else {
-        bgMusic.pause()
-        musicBtn.textContent = "▶ Music"
-        playing = false
-      }
-    } catch {
-      alert("Browser memblokir audio, klik lagi")
+  musicBtn.onclick = async () => {
+    if (!playing) {
+      await bgMusic.play()
+      musicBtn.textContent = "⏸ Music"
+    } else {
+      bgMusic.pause()
+      musicBtn.textContent = "▶ Music"
     }
-  })
+    playing = !playing
+  }
 
   /* ================= SLIDER ================= */
   function createSlider(track) {
@@ -55,15 +51,13 @@ document.addEventListener("DOMContentLoaded", () => {
   createSlider(sliderTrack)
   createSlider(sliderTrackExtra)
 
-  /* ================= MODAL ================= */
   modal.onclick = () => modal.style.display = "none"
 
-  /* ================= LOCAL STORAGE FOTO ================= */
+  /* ================= PHOTO STORAGE ================= */
   const PHOTO_KEY = "uploadedPhotos"
   const getPhotos = () => JSON.parse(localStorage.getItem(PHOTO_KEY) || "[]")
   const savePhotos = d => localStorage.setItem(PHOTO_KEY, JSON.stringify(d))
 
-  /* ================= PHOTO CARD ================= */
   function createPhotoCard(src, uploaded = false) {
     const card = document.createElement("div")
     card.className = "photo-card"
@@ -105,23 +99,39 @@ document.addEventListener("DOMContentLoaded", () => {
     return card
   }
 
-  /* ================= LOAD GALLERY ================= */
   function loadGallery() {
     galleryGrid.innerHTML = ""
-
     for (let i = 1; i <= totalPhotos; i++) {
       galleryGrid.appendChild(createPhotoCard(`images/${i}.jpeg`))
     }
-
     getPhotos().forEach(src => {
       galleryGrid.prepend(createPhotoCard(src, true))
     })
   }
 
-  /* ================= LOAD VIDEOS ================= */
+  /* ================= VIDEO CARD (DITAMBAH SAJA) ================= */
+  function createVideoCard(url, publicId) {
+    const wrap = document.createElement("div")
+    wrap.className = "video-card"
+
+    const video = document.createElement("video")
+    video.src = url
+    video.controls = true
+
+    const del = document.createElement("button")
+    del.textContent = "Hapus"
+    del.onclick = async () => {
+      if (!confirm("Hapus video ini?")) return
+      await fetch(`${API_DELETE}/${publicId}`, { method: "DELETE" })
+      wrap.remove()
+    }
+
+    wrap.append(video, del)
+    return wrap
+  }
+
   function loadVideos() {
     videoGrid.innerHTML = ""
-
     for (let i = 1; i <= totalVideos; i++) {
       const v = document.createElement("video")
       v.src = `videos/${i}.mp4`
@@ -130,13 +140,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  /* ================= UPLOAD FOTO (LOCAL) ================= */
+  /* ================= UPLOAD FOTO ================= */
   uploadBtn.onclick = () => uploadPhoto.click()
-
   uploadPhoto.onchange = () => {
     const file = uploadPhoto.files[0]
     if (!file) return
-
     const reader = new FileReader()
     reader.onload = () => {
       const src = reader.result
@@ -146,53 +154,32 @@ document.addEventListener("DOMContentLoaded", () => {
     reader.readAsDataURL(file)
   }
 
-  /* ================= UPLOAD VIDEO (API) ================= */
+  /* ================= UPLOAD VIDEO ================= */
   uploadVideoBtn.onclick = () => uploadVideo.click()
-
   uploadVideo.onchange = async () => {
     const file = uploadVideo.files[0]
     if (!file) return
 
-    try {
-      const formData = new FormData()
-      formData.append("file", file)
+    const formData = new FormData()
+    formData.append("file", file)
 
-      const res = await fetch(API_URL, {
-        method: "POST",
-        body: formData
-      })
+    const res = await fetch(API_UPLOAD, {
+      method: "POST",
+      body: formData
+    })
 
-      const data = await res.json()
-
-      if (!data.url) {
-        alert("Upload video gagal")
-        return
-      }
-
-      const video = document.createElement("video")
-      video.src = data.url
-      video.controls = true
-      videoGrid.prepend(video)
-
-      showSection("videos")
-    } catch (err) {
-      console.error(err)
-      alert("Gagal upload video")
-    }
+    const data = await res.json()
+    const publicId = data.public_id.split("/").pop()
+    const card = createVideoCard(data.url, publicId)
+    videoGrid.prepend(card)
   }
 
-  /* ================= MENU ================= */
   window.showSection = function(section) {
-    const slider = document.getElementById("slider")
-    const gallery = document.getElementById("gallery")
-    const videos = document.getElementById("videos")
-
     slider.style.display = section === "all" ? "block" : "none"
     gallery.style.display = section !== "videos" ? "block" : "none"
     videos.style.display = section === "videos" ? "block" : "none"
   }
 
-  /* ================= INIT ================= */
   loadGallery()
   loadVideos()
   showSection("all")
