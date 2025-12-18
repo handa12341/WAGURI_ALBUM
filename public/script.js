@@ -1,6 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
 
   /* ================= CONFIG ================= */
+  const API_URL = "https://wagurialbum-production.up.railway.app/api/upload"
   const totalPhotos = 40
   const totalVideos = 12
 
@@ -20,9 +21,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const uploadVideoBtn = document.getElementById("uploadVideoBtn")
   const uploadVideo = document.getElementById("uploadVideo")
 
-  /* ================= MUSIC (FIXED) ================= */
+  /* ================= MUSIC ================= */
   let playing = false
-
   musicBtn.addEventListener("click", async () => {
     try {
       if (!playing) {
@@ -35,8 +35,7 @@ document.addEventListener("DOMContentLoaded", () => {
         playing = false
       }
     } catch (err) {
-      alert("Browser memblokir audio. Klik tombol lagi.")
-      console.error(err)
+      alert("Klik tombol sekali lagi untuk memutar musik")
     }
   })
 
@@ -53,7 +52,6 @@ document.addEventListener("DOMContentLoaded", () => {
       track.appendChild(img)
     }
   }
-
   createSlider(sliderTrack)
   createSlider(sliderTrackExtra)
 
@@ -89,7 +87,6 @@ document.addEventListener("DOMContentLoaded", () => {
       a.download = "photo.jpg"
       a.click()
     }
-
     actions.appendChild(downloadBtn)
 
     if (uploaded) {
@@ -123,9 +120,10 @@ document.addEventListener("DOMContentLoaded", () => {
     })
   }
 
-  /* ================= VIDEOS (STATIC ONLY) ================= */
+  /* ================= VIDEOS (STATIC + API) ================= */
   function loadVideos() {
     videoGrid.innerHTML = ""
+
     for (let i = 1; i <= totalVideos; i++) {
       const v = document.createElement("video")
       v.src = `videos/${i}.mp4`
@@ -134,7 +132,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  /* ================= UPLOAD FOTO (LOCAL) ================= */
+  /* ================= UPLOAD FOTO (LOCAL – TETAP) ================= */
   uploadBtn.onclick = () => uploadPhoto.click()
 
   uploadPhoto.onchange = () => {
@@ -150,6 +148,42 @@ document.addEventListener("DOMContentLoaded", () => {
       savePhotos(d)
     }
     reader.readAsDataURL(file)
+  }
+
+  /* ================= UPLOAD VIDEO (API – DITAMBAHKAN) ================= */
+  uploadVideoBtn.onclick = () => uploadVideo.click()
+
+  uploadVideo.onchange = async () => {
+    const file = uploadVideo.files[0]
+    if (!file) return
+
+    try {
+      const formData = new FormData()
+      formData.append("file", file)
+
+      const res = await fetch(API_URL, {
+        method: "POST",
+        body: formData
+      })
+
+      const data = await res.json()
+
+      if (!data.url) {
+        alert("Upload video gagal")
+        return
+      }
+
+      const video = document.createElement("video")
+      video.src = data.url
+      video.controls = true
+      videoGrid.prepend(video)
+
+      showSection("videos")
+
+    } catch (err) {
+      console.error(err)
+      alert("Gagal upload video")
+    }
   }
 
   /* ================= MENU ================= */
