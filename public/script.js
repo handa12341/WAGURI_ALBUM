@@ -1,8 +1,8 @@
 document.addEventListener("DOMContentLoaded", () => {
 
   /* ================= CONFIG ================= */
-  const API_UPLOAD = "/api/upload"
-  const API_DELETE = "/api/video"
+  const API_UPLOAD_MEDIA = "/api/upload-media"
+  const API_DELETE_VIDEO = "/api/video"
   const totalPhotos = 40
   const totalVideos = 12
 
@@ -89,18 +89,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     actions.appendChild(downloadBtn)
 
-    if (uploaded) {
-      const del = document.createElement("button")
-      del.textContent = "Hapus"
-      del.onclick = e => {
-        e.stopPropagation()
-        if (!confirm("Hapus foto ini?")) return
-        card.remove()
-        savePhotos(getPhotos().filter(p => p !== src))
-      }
-      actions.appendChild(del)
-    }
-
     card.append(img, actions)
     return card
   }
@@ -128,7 +116,7 @@ document.addEventListener("DOMContentLoaded", () => {
     del.textContent = "Hapus"
     del.onclick = async () => {
       if (!confirm("Hapus video ini?")) return
-      await fetch(`${API_DELETE}/${publicId}`, { method: "DELETE" })
+      await fetch(`${API_DELETE_VIDEO}/${publicId}`, { method: "DELETE" })
       wrap.remove()
     }
 
@@ -136,30 +124,32 @@ document.addEventListener("DOMContentLoaded", () => {
     return wrap
   }
 
-  function loadVideos() {
-    videoGrid.innerHTML = ""
-    for (let i = 1; i <= totalVideos; i++) {
-      const v = document.createElement("video")
-      v.src = `videos/${i}.mp4`
-      v.controls = true
-      videoGrid.appendChild(v)
-    }
-  }
-
-  /* ================= UPLOAD FOTO ================= */
+  /* ================= UPLOAD FOTO (FIXED) ================= */
   uploadBtn.onclick = () => uploadPhoto.click()
 
-  uploadPhoto.onchange = () => {
+  uploadPhoto.onchange = async () => {
     const file = uploadPhoto.files[0]
     if (!file) return
 
-    const reader = new FileReader()
-    reader.onload = () => {
-      const src = reader.result
-      galleryGrid.prepend(createPhotoCard(src, true))
-      savePhotos([...getPhotos(), src])
+    const formData = new FormData()
+    formData.append("file", file)
+
+    try {
+      const res = await fetch(API_UPLOAD_MEDIA, {
+        method: "POST",
+        body: formData
+      })
+
+      const data = await res.json()
+      if (!data.success) throw new Error("Upload gagal")
+
+      galleryGrid.prepend(createPhotoCard(data.url, true))
+      savePhotos([...getPhotos(), data.url])
+
+    } catch (err) {
+      console.error(err)
+      alert("Upload foto gagal")
     }
-    reader.readAsDataURL(file)
   }
 
   /* ================= UPLOAD VIDEO ================= */
@@ -173,24 +163,20 @@ document.addEventListener("DOMContentLoaded", () => {
     formData.append("file", file)
 
     try {
-      const res = await fetch(API_UPLOAD, {
+      const res = await fetch(API_UPLOAD_MEDIA, {
         method: "POST",
         body: formData
       })
 
       const data = await res.json()
-      if (!data.success) {
-        alert("Upload gagal")
-        return
-      }
+      if (!data.success) throw new Error("Upload gagal")
 
       const publicId = data.public_id.split("/").pop()
-      const card = createVideoCard(data.url, publicId)
-      videoGrid.prepend(card)
+      videoGrid.prepend(createVideoCard(data.url, publicId))
 
     } catch (err) {
       console.error(err)
-      alert("Terjadi kesalahan upload")
+      alert("Upload video gagal")
     }
   }
 
@@ -203,7 +189,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   /* ================= INIT ================= */
   loadGallery()
-  loadVideos()
   showSection("all")
 
 })
