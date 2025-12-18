@@ -1,10 +1,11 @@
 document.addEventListener("DOMContentLoaded", () => {
 
   /* ================= CONFIG ================= */
-  const API_UPLOAD_MEDIA = "/api/upload-media"
+  const API_UPLOAD_VIDEO = "/api/upload"            // video (lama)
+  const API_UPLOAD_MEDIA = "/api/upload-media"      // foto (baru)
   const API_DELETE_VIDEO = "/api/video"
+  const API_DELETE_PHOTO = "/api/photo"
   const totalPhotos = 40
-  const totalVideos = 12
 
   /* ================= ELEMENT ================= */
   const sliderTrack = document.getElementById("sliderTrack")
@@ -56,15 +57,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   createSlider(sliderTrack)
   createSlider(sliderTrackExtra)
-
   modal.onclick = () => modal.style.display = "none"
 
-  /* ================= PHOTO STORAGE ================= */
-  const PHOTO_KEY = "uploadedPhotos"
-  const getPhotos = () => JSON.parse(localStorage.getItem(PHOTO_KEY) || "[]")
-  const savePhotos = data => localStorage.setItem(PHOTO_KEY, JSON.stringify(data))
-
-  function createPhotoCard(src, uploaded = false) {
+  /* ================= PHOTO ================= */
+  function createPhotoCard(src, publicId = null) {
     const card = document.createElement("div")
     card.className = "photo-card"
 
@@ -89,18 +85,20 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     actions.appendChild(downloadBtn)
 
+    if (publicId) {
+      const del = document.createElement("button")
+      del.textContent = "Hapus"
+      del.onclick = async e => {
+        e.stopPropagation()
+        if (!confirm("Hapus foto ini?")) return
+        await fetch(`${API_DELETE_PHOTO}/${publicId}`, { method: "DELETE" })
+        card.remove()
+      }
+      actions.appendChild(del)
+    }
+
     card.append(img, actions)
     return card
-  }
-
-  function loadGallery() {
-    galleryGrid.innerHTML = ""
-    for (let i = 1; i <= totalPhotos; i++) {
-      galleryGrid.appendChild(createPhotoCard(`images/${i}.jpeg`))
-    }
-    getPhotos().forEach(src => {
-      galleryGrid.prepend(createPhotoCard(src, true))
-    })
   }
 
   /* ================= VIDEO ================= */
@@ -124,7 +122,20 @@ document.addEventListener("DOMContentLoaded", () => {
     return wrap
   }
 
-  /* ================= UPLOAD FOTO (FIXED) ================= */
+  async function loadVideos() {
+    videoGrid.innerHTML = ""
+    try {
+      const res = await fetch("/api/videos")
+      const data = await res.json()
+      data.forEach(v => {
+        videoGrid.appendChild(createVideoCard(v.url, v.public_id))
+      })
+    } catch (err) {
+      console.error("Gagal load video", err)
+    }
+  }
+
+  /* ================= UPLOAD FOTO ================= */
   uploadBtn.onclick = () => uploadPhoto.click()
 
   uploadPhoto.onchange = async () => {
@@ -141,13 +152,16 @@ document.addEventListener("DOMContentLoaded", () => {
       })
 
       const data = await res.json()
-      if (!data.success) throw new Error("Upload gagal")
+      if (!data.success) throw new Error()
 
-      galleryGrid.prepend(createPhotoCard(data.url, true))
-      savePhotos([...getPhotos(), data.url])
+      galleryGrid.prepend(
+        createPhotoCard(
+          data.url,
+          data.public_id.split("/").pop()
+        )
+      )
 
     } catch (err) {
-      console.error(err)
       alert("Upload foto gagal")
     }
   }
@@ -163,19 +177,22 @@ document.addEventListener("DOMContentLoaded", () => {
     formData.append("file", file)
 
     try {
-      const res = await fetch(API_UPLOAD_MEDIA, {
+      const res = await fetch(API_UPLOAD_VIDEO, {
         method: "POST",
         body: formData
       })
 
       const data = await res.json()
-      if (!data.success) throw new Error("Upload gagal")
+      if (!data.success) throw new Error()
 
-      const publicId = data.public_id.split("/").pop()
-      videoGrid.prepend(createVideoCard(data.url, publicId))
+      videoGrid.prepend(
+        createVideoCard(
+          data.url,
+          data.public_id.split("/").pop()
+        )
+      )
 
     } catch (err) {
-      console.error(err)
       alert("Upload video gagal")
     }
   }
@@ -188,7 +205,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   /* ================= INIT ================= */
-  loadGallery()
+  loadVideos()
   showSection("all")
 
 })
