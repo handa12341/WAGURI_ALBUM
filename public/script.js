@@ -6,6 +6,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const totalPhotos = 40
   const totalVideos = 12
 
+  /* ================= ELEMENT ================= */
   const sliderTrack = document.getElementById("sliderTrack")
   const sliderTrackExtra = document.getElementById("sliderTrackExtra")
   const galleryGrid = document.getElementById("galleryGrid")
@@ -21,6 +22,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const uploadPhoto = document.getElementById("uploadPhoto")
   const uploadVideoBtn = document.getElementById("uploadVideoBtn")
   const uploadVideo = document.getElementById("uploadVideo")
+
+  const slider = document.getElementById("slider")
+  const gallery = document.getElementById("gallery")
+  const videos = document.getElementById("videos")
 
   /* ================= MUSIC ================= */
   let playing = false
@@ -48,6 +53,7 @@ document.addEventListener("DOMContentLoaded", () => {
       track.appendChild(img)
     }
   }
+
   createSlider(sliderTrack)
   createSlider(sliderTrackExtra)
 
@@ -56,7 +62,7 @@ document.addEventListener("DOMContentLoaded", () => {
   /* ================= PHOTO STORAGE ================= */
   const PHOTO_KEY = "uploadedPhotos"
   const getPhotos = () => JSON.parse(localStorage.getItem(PHOTO_KEY) || "[]")
-  const savePhotos = d => localStorage.setItem(PHOTO_KEY, JSON.stringify(d))
+  const savePhotos = data => localStorage.setItem(PHOTO_KEY, JSON.stringify(data))
 
   function createPhotoCard(src, uploaded = false) {
     const card = document.createElement("div")
@@ -109,7 +115,7 @@ document.addEventListener("DOMContentLoaded", () => {
     })
   }
 
-  /* ================= VIDEO CARD (DITAMBAH SAJA) ================= */
+  /* ================= VIDEO ================= */
   function createVideoCard(url, publicId) {
     const wrap = document.createElement("div")
     wrap.className = "video-card"
@@ -142,9 +148,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   /* ================= UPLOAD FOTO ================= */
   uploadBtn.onclick = () => uploadPhoto.click()
+
   uploadPhoto.onchange = () => {
     const file = uploadPhoto.files[0]
     if (!file) return
+
     const reader = new FileReader()
     reader.onload = () => {
       const src = reader.result
@@ -156,6 +164,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   /* ================= UPLOAD VIDEO ================= */
   uploadVideoBtn.onclick = () => uploadVideo.click()
+
   uploadVideo.onchange = async () => {
     const file = uploadVideo.files[0]
     if (!file) return
@@ -163,23 +172,36 @@ document.addEventListener("DOMContentLoaded", () => {
     const formData = new FormData()
     formData.append("file", file)
 
-    const res = await fetch(API_UPLOAD, {
-      method: "POST",
-      body: formData
-    })
+    try {
+      const res = await fetch(API_UPLOAD, {
+        method: "POST",
+        body: formData
+      })
 
-    const data = await res.json()
-    const publicId = data.public_id.split("/").pop()
-    const card = createVideoCard(data.url, publicId)
-    videoGrid.prepend(card)
+      const data = await res.json()
+      if (!data.success) {
+        alert("Upload gagal")
+        return
+      }
+
+      const publicId = data.public_id.split("/").pop()
+      const card = createVideoCard(data.url, publicId)
+      videoGrid.prepend(card)
+
+    } catch (err) {
+      console.error(err)
+      alert("Terjadi kesalahan upload")
+    }
   }
 
+  /* ================= NAV ================= */
   window.showSection = function(section) {
     slider.style.display = section === "all" ? "block" : "none"
     gallery.style.display = section !== "videos" ? "block" : "none"
     videos.style.display = section === "videos" ? "block" : "none"
   }
 
+  /* ================= INIT ================= */
   loadGallery()
   loadVideos()
   showSection("all")
