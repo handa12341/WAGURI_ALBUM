@@ -34,8 +34,8 @@ document.addEventListener("DOMContentLoaded", () => {
         musicBtn.textContent = "▶ Music"
         playing = false
       }
-    } catch (err) {
-      alert("Klik tombol sekali lagi untuk memutar musik")
+    } catch {
+      alert("Browser memblokir audio, klik lagi")
     }
   })
 
@@ -110,9 +110,7 @@ document.addEventListener("DOMContentLoaded", () => {
     galleryGrid.innerHTML = ""
 
     for (let i = 1; i <= totalPhotos; i++) {
-      galleryGrid.appendChild(
-        createPhotoCard(`images/${i}.jpeg`)
-      )
+      galleryGrid.appendChild(createPhotoCard(`images/${i}.jpeg`))
     }
 
     getPhotos().forEach(src => {
@@ -120,7 +118,7 @@ document.addEventListener("DOMContentLoaded", () => {
     })
   }
 
-  /* ================= VIDEOS (STATIC + API) ================= */
+  /* ================= LOAD VIDEOS ================= */
   function loadVideos() {
     videoGrid.innerHTML = ""
 
@@ -132,7 +130,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  /* ================= UPLOAD FOTO (LOCAL – TETAP) ================= */
+  /* ================= UPLOAD FOTO (LOCAL) ================= */
   uploadBtn.onclick = () => uploadPhoto.click()
 
   uploadPhoto.onchange = () => {
@@ -143,14 +141,12 @@ document.addEventListener("DOMContentLoaded", () => {
     reader.onload = () => {
       const src = reader.result
       galleryGrid.prepend(createPhotoCard(src, true))
-      const d = getPhotos()
-      d.push(src)
-      savePhotos(d)
+      savePhotos([...getPhotos(), src])
     }
     reader.readAsDataURL(file)
   }
 
-  /* ================= UPLOAD VIDEO (API – DITAMBAHKAN) ================= */
+  /* ================= UPLOAD VIDEO (API) ================= */
   uploadVideoBtn.onclick = () => uploadVideo.click()
 
   uploadVideo.onchange = async () => {
@@ -179,7 +175,6 @@ document.addEventListener("DOMContentLoaded", () => {
       videoGrid.prepend(video)
 
       showSection("videos")
-
     } catch (err) {
       console.error(err)
       alert("Gagal upload video")
