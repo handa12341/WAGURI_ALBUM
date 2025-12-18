@@ -3,6 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <title>WAGURI</title>
+
+  <!-- 🔥 WAJIB UNTUK RESPONSIVE HP -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -21,12 +25,10 @@
 </nav>
 
 <!-- ================= FLOATING UPLOAD ================= -->
-<button id="uploadBtn" class="upload-fab">＋ Upload</button>
+<button id="uploadBtn" class="upload-fab">＋</button>
 <input type="file" id="uploadPhoto" accept="image/*" hidden>
 
-<button id="uploadVideoBtn" class="upload-fab" style="right:140px">
-  ＋ Video
-</button>
+<button id="uploadVideoBtn" class="upload-fab upload-video">＋</button>
 <input type="file" id="uploadVideo" accept="video/*" hidden>
 
 <!-- ================= SLIDER ================= -->
@@ -55,13 +57,11 @@
   <img id="modalImg">
 </div>
 
-<!-- ================= MUSIC (FIXED) ================= -->
+<!-- ================= MUSIC ================= -->
 <audio id="bgMusic" loop>
-  <source src="music/a-sorrowful-reunion.mp3" type="audio/mpeg">
+  <source src="music/EVERYTHING.mp3" type="audio/mpeg">
 </audio>
 
-<!-- ================= SCRIPT ================= -->
 <script src="script.js"></script>
-
 </body>
 </html>
