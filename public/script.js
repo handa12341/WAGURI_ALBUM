@@ -230,3 +230,19 @@ loadServerVideos()
 showSection("all")
 
 })
+const musicBtn = document.getElementById("musicBtn")
+const bgMusic = document.getElementById("bgMusic")
+
+let isPlaying = false
+
+musicBtn.addEventListener("click", () => {
+  if (!isPlaying) {
+    bgMusic.play()
+    musicBtn.textContent = "⏸ Pause"
+    isPlaying = true
+  } else {
+    bgMusic.pause()
+    musicBtn.textContent = "▶ Music"
+    isPlaying = false
+  }
+})
