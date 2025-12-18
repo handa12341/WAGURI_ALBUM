@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>WAGURI</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ================= NAVBAR ================= -->
+<nav class="navbar">
+  <h2>WAGURI</h2>
+
+  <ul>
+    <li onclick="showSection('all')">WAGURI</li>
+    <li onclick="showSection('gallery')">GALLERY</li>
+    <li onclick="showSection('videos')">VIDEOS</li>
+  </ul>
+
+  <button id="musicBtn">▶ Music</button>
+</nav>
+
+<!-- ================= FLOATING UPLOAD ================= -->
+<button id="uploadBtn" class="upload-fab">＋ Upload</button>
+<input type="file" id="uploadPhoto" accept="image/*" hidden>
+
+<button id="uploadVideoBtn" class="upload-fab" style="right:140px">
+  ＋ Video
+</button>
+<input type="file" id="uploadVideo" accept="video/*" hidden>
+
+<!-- ================= SLIDER ================= -->
+<section id="slider" class="section">
+  <div class="slider">
+    <div class="slider-track" id="sliderTrack"></div>
+  </div>
+
+  <div class="slider">
+    <div class="slider-track" id="sliderTrackExtra"></div>
+  </div>
+</section>
+
+<!-- ================= GALLERY ================= -->
+<section id="gallery" class="section">
+  <div class="gallery" id="galleryGrid"></div>
+</section>
+
+<!-- ================= VIDEOS ================= -->
+<section id="videos" class="section" style="display:none">
+  <div class="video-grid" id="videoGrid"></div>
+</section>
+
+<!-- ================= MODAL ================= -->
+<div class="modal" id="modal">
+  <img id="modalImg">
+</div>
+
+<!-- ================= MUSIC (FIXED) ================= -->
+<audio id="bgMusic" loop>
+  <source src="music/a-sorrowful-reunion.mp3" type="audio/mpeg">
+</audio>
+
+<!-- ================= SCRIPT ================= -->
+<script src="script.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,11 @@
+# dependencies
+node_modules/
+
+# upload hasil user
+server/uploads/
+
+# env rahasia
+server/.env
+
+# log
+npm-debug.log*
