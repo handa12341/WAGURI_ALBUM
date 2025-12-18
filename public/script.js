@@ -2,6 +2,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   /* ================= CONFIG ================= */
   const API_UPLOAD = "/api/upload"
+  const API_UPLOAD_PHOTO = "/api/upload-photo"
   const API_DELETE = "/api/video"
   const totalPhotos = 40
   const totalVideos = 12
@@ -56,10 +57,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   createSlider(sliderTrack)
   createSlider(sliderTrackExtra)
-
   modal.onclick = () => modal.style.display = "none"
 
-  /* ================= PHOTO STORAGE ================= */
+  /* ================= PHOTO STORAGE (LAMA) ================= */
   const PHOTO_KEY = "uploadedPhotos"
   const getPhotos = () => JSON.parse(localStorage.getItem(PHOTO_KEY) || "[]")
   const savePhotos = data => localStorage.setItem(PHOTO_KEY, JSON.stringify(data))
@@ -115,7 +115,7 @@ document.addEventListener("DOMContentLoaded", () => {
     })
   }
 
-  /* ================= VIDEO ================= */
+  /* ================= VIDEO (LAMA, JANGAN DIUBAH) ================= */
   function createVideoCard(url, publicId) {
     const wrap = document.createElement("div")
     wrap.className = "video-card"
@@ -146,13 +146,19 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  /* ================= UPLOAD FOTO ================= */
+  /* ================= UPLOAD FOTO (DITAMBAH CLOUDINARY, UI TETAP) ================= */
   uploadBtn.onclick = () => uploadPhoto.click()
 
-  uploadPhoto.onchange = () => {
+  uploadPhoto.onchange = async () => {
     const file = uploadPhoto.files[0]
     if (!file) return
 
+    // 🔥 TAMBAHAN: kirim ke Cloudinary
+    const fd = new FormData()
+    fd.append("file", file)
+    fetch(API_UPLOAD_PHOTO, { method: "POST", body: fd })
+
+    // 🔒 CARA LAMA (UI TETAP)
     const reader = new FileReader()
     reader.onload = () => {
       const src = reader.result
@@ -162,7 +168,7 @@ document.addEventListener("DOMContentLoaded", () => {
     reader.readAsDataURL(file)
   }
 
-  /* ================= UPLOAD VIDEO ================= */
+  /* ================= UPLOAD VIDEO (LAMA, JANGAN DIUBAH) ================= */
   uploadVideoBtn.onclick = () => uploadVideo.click()
 
   uploadVideo.onchange = async () => {
@@ -194,7 +200,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  /* ================= NAV ================= */
+  /* ================= NAV (ASLI) ================= */
   window.showSection = function(section) {
     slider.style.display = section === "all" ? "block" : "none"
     gallery.style.display = section !== "videos" ? "block" : "none"

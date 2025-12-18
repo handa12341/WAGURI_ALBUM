@@ -30,25 +30,35 @@ app.get("/", (req, res) => {
 /* ================= MULTER ================= */
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 100 * 1024 * 1024 },
+  limits: { fileSize: 100 * 1024 * 1024 }, // 100MB
 })
 
 /* ================= UPLOAD VIDEO ================= */
 app.post("/api/upload", upload.single("file"), (req, res) => {
-  if (!req.file) return res.status(400).json({ error: "File tidak ada" })
+  if (!req.file) {
+    return res.status(400).json({ success: false, error: "File tidak ada" })
+  }
 
   const uploadStream = cloudinary.uploader.upload_stream(
     { resource_type: "video", folder: "waguri_videos" },
     (err, result) => {
-      if (err) return res.status(500).json({ error: "Upload video gagal" })
-      res.json({ success: true, url: result.secure_url, public_id: result.public_id })
+      if (err) {
+        console.error("Upload video error:", err)
+        return res.status(500).json({ success: false, error: "Upload video gagal" })
+      }
+
+      res.json({
+        success: true,
+        url: result.secure_url,
+        public_id: result.public_id,
+      })
     }
   )
 
   streamifier.createReadStream(req.file.buffer).pipe(uploadStream)
 })
 
-/* ================= LIST VIDEO (FIX FINAL) ================= */
+/* ================= LIST VIDEO ================= */
 app.get("/api/videos", async (req, res) => {
   try {
     const result = await cloudinary.api.resources({
@@ -65,7 +75,7 @@ app.get("/api/videos", async (req, res) => {
       }))
     )
   } catch (err) {
-    console.error(err)
+    console.error("List video error:", err)
     res.status(500).json({ error: "Gagal ambil video" })
   }
 })
@@ -77,24 +87,38 @@ app.delete("/api/video/:publicId", async (req, res) => {
       resource_type: "video",
     })
     res.json({ success: true })
-  } catch {
+  } catch (err) {
+    console.error("Delete video error:", err)
     res.status(500).json({ error: "Gagal hapus video" })
   }
 })
 
 /* ================= UPLOAD FOTO ================= */
 app.post("/api/upload-photo", upload.single("file"), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ success: false, error: "File tidak ada" })
+  }
+
   const uploadStream = cloudinary.uploader.upload_stream(
     { resource_type: "image", folder: "waguri_photos" },
     (err, result) => {
-      if (err) return res.status(500).json({ error: "Upload foto gagal" })
-      res.json({ success: true, url: result.secure_url, public_id: result.public_id })
+      if (err) {
+        console.error("Upload foto error:", err)
+        return res.status(500).json({ success: false, error: "Upload foto gagal" })
+      }
+
+      res.json({
+        success: true,
+        url: result.secure_url,
+        public_id: result.public_id,
+      })
     }
   )
+
   streamifier.createReadStream(req.file.buffer).pipe(uploadStream)
 })
 
-/* ================= LIST FOTO (FIX FINAL) ================= */
+/* ================= LIST FOTO ================= */
 app.get("/api/photos", async (req, res) => {
   try {
     const result = await cloudinary.api.resources({
@@ -110,7 +134,8 @@ app.get("/api/photos", async (req, res) => {
         public_id: p.public_id.split("/").pop(),
       }))
     )
-  } catch {
+  } catch (err) {
+    console.error("List photo error:", err)
     res.status(500).json({ error: "Gagal ambil foto" })
   }
 })
@@ -120,27 +145,44 @@ app.delete("/api/photo/:publicId", async (req, res) => {
   try {
     await cloudinary.uploader.destroy(`waguri_photos/${req.params.publicId}`)
     res.json({ success: true })
-  } catch {
+  } catch (err) {
+    console.error("Delete photo error:", err)
     res.status(500).json({ error: "Gagal hapus foto" })
   }
 })
 
-/* ================= UPLOAD AUTO ================= */
+/* ================= UPLOAD AUTO (FOTO + VIDEO) ================= */
 app.post("/api/upload-media", upload.single("file"), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ success: false, error: "File tidak ada" })
+  }
+
   const isVideo = req.file.mimetype.startsWith("video")
+  const resource_type = isVideo ? "video" : "image"
   const folder = isVideo ? "waguri_videos" : "waguri_photos"
 
   const uploadStream = cloudinary.uploader.upload_stream(
-    { resource_type: isVideo ? "video" : "image", folder },
+    { resource_type, folder },
     (err, result) => {
-      if (err) return res.status(500).json({ error: "Upload gagal" })
-      res.json({ success: true, url: result.secure_url, public_id: result.public_id })
+      if (err) {
+        console.error("Upload media error:", err)
+        return res.status(500).json({ success: false, error: "Upload gagal" })
+      }
+
+      res.json({
+        success: true,
+        type: resource_type,
+        url: result.secure_url,
+        public_id: result.public_id,
+      })
     }
   )
 
   streamifier.createReadStream(req.file.buffer).pipe(uploadStream)
 })
 
-app.listen(process.env.PORT || 3000, () => {
-  console.log("🚀 Server running")
+/* ================= START ================= */
+const PORT = process.env.PORT || 3000
+app.listen(PORT, () => {
+  console.log("🚀 Server running on port", PORT)
 })
