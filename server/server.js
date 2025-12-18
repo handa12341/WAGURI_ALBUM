@@ -37,7 +37,6 @@ const upload = multer({
    ==================== VIDEO ======================
    ================================================= */
 
-/* UPLOAD VIDEO */
 app.post("/api/upload", upload.single("file"), (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: "File tidak ada" })
@@ -65,7 +64,6 @@ app.post("/api/upload", upload.single("file"), (req, res) => {
   streamifier.createReadStream(req.file.buffer).pipe(uploadStream)
 })
 
-/* LIST VIDEOS (ANTI HILANG SAAT REFRESH) */
 app.get("/api/videos", async (req, res) => {
   try {
     const result = await cloudinary.search
@@ -86,7 +84,6 @@ app.get("/api/videos", async (req, res) => {
   }
 })
 
-/* DELETE VIDEO */
 app.delete("/api/video/:publicId", async (req, res) => {
   const { publicId } = req.params
 
@@ -106,7 +103,6 @@ app.delete("/api/video/:publicId", async (req, res) => {
    ==================== FOTO =======================
    ================================================= */
 
-/* UPLOAD FOTO */
 app.post("/api/upload-photo", upload.single("file"), (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: "File tidak ada" })
@@ -134,7 +130,6 @@ app.post("/api/upload-photo", upload.single("file"), (req, res) => {
   streamifier.createReadStream(req.file.buffer).pipe(uploadStream)
 })
 
-/* LIST FOTO */
 app.get("/api/photos", async (req, res) => {
   try {
     const result = await cloudinary.search
@@ -155,7 +150,6 @@ app.get("/api/photos", async (req, res) => {
   }
 })
 
-/* DELETE FOTO */
 app.delete("/api/photo/:publicId", async (req, res) => {
   const { publicId } = req.params
 
@@ -169,6 +163,42 @@ app.delete("/api/photo/:publicId", async (req, res) => {
     console.error("Delete photo error:", err)
     res.status(500).json({ error: "Gagal hapus foto" })
   }
+})
+
+/* =================================================
+   ========== FOTO + VIDEO (AUTO) ==================
+   ================================================= */
+
+app.post("/api/upload-media", upload.single("file"), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: "File tidak ada" })
+  }
+
+  const isVideo = req.file.mimetype.startsWith("video")
+  const resourceType = isVideo ? "video" : "image"
+  const folder = isVideo ? "waguri_videos" : "waguri_photos"
+
+  const uploadStream = cloudinary.uploader.upload_stream(
+    {
+      resource_type: resourceType,
+      folder,
+    },
+    (err, result) => {
+      if (err) {
+        console.error("Upload media error:", err)
+        return res.status(500).json({ error: "Upload gagal" })
+      }
+
+      res.json({
+        success: true,
+        type: resourceType,
+        url: result.secure_url,
+        public_id: result.public_id,
+      })
+    }
+  )
+
+  streamifier.createReadStream(req.file.buffer).pipe(uploadStream)
 })
 
 /* ================= HEALTH ================= */
