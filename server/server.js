@@ -5,6 +5,7 @@ const cors = require("cors")
 const multer = require("multer")
 const cloudinary = require("cloudinary").v2
 const streamifier = require("streamifier")
+const path = require("path")
 
 const app = express()
 
@@ -12,17 +13,24 @@ const app = express()
 app.use(cors())
 app.use(express.json())
 
-/* ================= CLOUDINARY CONFIG ================= */
+/* ================= CLOUDINARY ================= */
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 })
 
+/* ================= SERVE FRONTEND ================= */
+app.use(express.static(path.join(__dirname, "../public")))
+
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "../public/index.html"))
+})
+
 /* ================= MULTER ================= */
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 100 * 1024 * 1024 }, // 100MB
+  limits: { fileSize: 100 * 1024 * 1024 },
 })
 
 /* ================= UPLOAD API ================= */
@@ -33,7 +41,7 @@ app.post("/api/upload", upload.single("file"), (req, res) => {
 
   const uploadStream = cloudinary.uploader.upload_stream(
     {
-      resource_type: "auto", // foto & video
+      resource_type: "auto",
       folder: "waguri_album",
     },
     (err, result) => {
@@ -52,13 +60,13 @@ app.post("/api/upload", upload.single("file"), (req, res) => {
   streamifier.createReadStream(req.file.buffer).pipe(uploadStream)
 })
 
-/* ================= HEALTH CHECK ================= */
+/* ================= HEALTH ================= */
 app.get("/api/health", (req, res) => {
   res.json({ status: "ok" })
 })
 
-/* ================= START SERVER ================= */
+/* ================= START ================= */
 const PORT = process.env.PORT || 3000
 app.listen(PORT, () => {
-  console.log(" Server running on port", PORT)
+  console.log("🚀 Server running on port", PORT)
 })
