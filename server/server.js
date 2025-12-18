@@ -1,26 +1,13 @@
 require("dotenv").config()
-
 const express = require("express")
 const cors = require("cors")
 const multer = require("multer")
-const path = require("path")
 const cloudinary = require("cloudinary").v2
 const streamifier = require("streamifier")
 
 const app = express()
-
-/* ================= MIDDLEWARE ================= */
 app.use(cors())
 app.use(express.json())
-
-/* ================= ENV GUARD (PENTING) ================= */
-if (
-  !process.env.CLOUDINARY_CLOUD_NAME ||
-  !process.env.CLOUDINARY_API_KEY ||
-  !process.env.CLOUDINARY_API_SECRET
-) {
-  console.error("❌ Cloudinary ENV belum lengkap")
-}
 
 /* ================= CLOUDINARY ================= */
 cloudinary.config({
@@ -29,18 +16,8 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET
 })
 
-/* ================= SERVE FRONTEND ================= */
-app.use(express.static(path.join(__dirname, "../public")))
-
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "../public/index.html"))
-})
-
 /* ================= MULTER ================= */
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 100 * 1024 * 1024 } // 100MB
-})
+const upload = multer({ storage: multer.memoryStorage() })
 
 /* ================= UPLOAD API ================= */
 app.post("/api/upload", upload.single("file"), (req, res) => {
@@ -50,18 +27,17 @@ app.post("/api/upload", upload.single("file"), (req, res) => {
 
   const stream = cloudinary.uploader.upload_stream(
     {
-      resource_type: "auto",
-      folder: "waguri_album"
+      resource_type: "auto" // ⬅ penting: foto & video
     },
     (error, result) => {
       if (error) {
-        console.error("Cloudinary error:", error)
+        console.error(error)
         return res.status(500).json({ error: "Upload gagal" })
       }
 
       res.json({
-        success: true,
-        url: result.secure_url
+        url: result.secure_url,
+        type: result.resource_type
       })
     }
   )
@@ -69,13 +45,8 @@ app.post("/api/upload", upload.single("file"), (req, res) => {
   streamifier.createReadStream(req.file.buffer).pipe(stream)
 })
 
-/* ================= HEALTH CHECK ================= */
-app.get("/api/health", (req, res) => {
-  res.json({ status: "ok" })
-})
-
 /* ================= START ================= */
 const PORT = process.env.PORT || 3000
 app.listen(PORT, () => {
-  console.log("🚀 Server running on port", PORT)
+  console.log("Server running on port", PORT)
 })
