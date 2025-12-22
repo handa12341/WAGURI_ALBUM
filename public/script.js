@@ -41,12 +41,13 @@ document.addEventListener("DOMContentLoaded", () => {
     playing = !playing
   }
 
-  /* ================= SLIDER ================= */
+  /* ================= SLIDER (40 SLOT, 1 FOTO) ================= */
   function createSlider(track) {
+    track.innerHTML = ""
+
     for (let i = 1; i <= totalPhotos * 2; i++) {
-      const index = ((i - 1) % totalPhotos) + 1
       const img = document.createElement("img")
-      img.src = `images/${index}.jpeg`
+      img.src = "images/1.jpg"
       img.onclick = () => {
         modalImg.src = img.src
         modal.style.display = "flex"
@@ -57,12 +58,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
   createSlider(sliderTrack)
   createSlider(sliderTrackExtra)
+
   modal.onclick = () => modal.style.display = "none"
 
-  /* ================= PHOTO STORAGE (LAMA) ================= */
+  /* ================= PHOTO STORAGE ================= */
   const PHOTO_KEY = "uploadedPhotos"
   const getPhotos = () => JSON.parse(localStorage.getItem(PHOTO_KEY) || "[]")
-  const savePhotos = data => localStorage.setItem(PHOTO_KEY, JSON.stringify(data))
+  const savePhotos = data =>
+    localStorage.setItem(PHOTO_KEY, JSON.stringify(data))
 
   function createPhotoCard(src, uploaded = false) {
     const card = document.createElement("div")
@@ -105,11 +108,16 @@ document.addEventListener("DOMContentLoaded", () => {
     return card
   }
 
+  /* ================= GALLERY (40 SLOT, 1 FOTO) ================= */
   function loadGallery() {
     galleryGrid.innerHTML = ""
+
+    // 40 slot pakai 1 foto
     for (let i = 1; i <= totalPhotos; i++) {
-      galleryGrid.appendChild(createPhotoCard(`images/${i}.jpeg`))
+      galleryGrid.appendChild(createPhotoCard("images/1.jpg"))
     }
+
+    // foto upload user di atas
     getPhotos().forEach(src => {
       galleryGrid.prepend(createPhotoCard(src, true))
     })
@@ -146,19 +154,17 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  /* ================= UPLOAD FOTO (DITAMBAH CLOUDINARY, UI TETAP) ================= */
+  /* ================= UPLOAD FOTO ================= */
   uploadBtn.onclick = () => uploadPhoto.click()
 
   uploadPhoto.onchange = async () => {
     const file = uploadPhoto.files[0]
     if (!file) return
 
-    // 🔥 TAMBAHAN: kirim ke Cloudinary
     const fd = new FormData()
     fd.append("file", file)
     fetch(API_UPLOAD_PHOTO, { method: "POST", body: fd })
 
-    // 🔒 CARA LAMA (UI TETAP)
     const reader = new FileReader()
     reader.onload = () => {
       const src = reader.result
@@ -168,7 +174,7 @@ document.addEventListener("DOMContentLoaded", () => {
     reader.readAsDataURL(file)
   }
 
-  /* ================= UPLOAD VIDEO (LAMA, JANGAN DIUBAH) ================= */
+  /* ================= UPLOAD VIDEO ================= */
   uploadVideoBtn.onclick = () => uploadVideo.click()
 
   uploadVideo.onchange = async () => {
@@ -200,7 +206,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  /* ================= NAV (ASLI) ================= */
+  /* ================= NAV ================= */
   window.showSection = function(section) {
     slider.style.display = section === "all" ? "block" : "none"
     gallery.style.display = section !== "videos" ? "block" : "none"
