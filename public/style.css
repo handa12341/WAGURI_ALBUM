@@ -211,7 +211,7 @@ body::before {
   content: "";
   position: fixed;
   inset: 0;
-  background-image: url("images/background/Bg.jpeg");
+  background-image: url("images/background/Bg.jpg");
   background-size: cover;
   background-position: center;
   filter: blur(10px);
